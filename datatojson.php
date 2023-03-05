@@ -14,7 +14,7 @@ if (!$conn) {
 }
 
 // Execute query
-$sql = "SELECT * FROM notify LIMIT 10";
+$sql = "SELECT * FROM notify";
 $result = mysqli_query($conn, $sql);
 
 // Check for errors
@@ -25,10 +25,15 @@ if (!$result) {
 // Fetch data and print as JSON
 $data = array();
 while ($row = mysqli_fetch_assoc($result)) {
+  $text = $row['text'];
+  $pattern = "/\d+(\.\d+)?/";
+  $replacement = "$0";
+  $amount = preg_replace($pattern, $replacement, $text);
+  $text = trim($amount);
   $data[] = array(
     "id" => $row["id"],
     "title" => $row["title"],
-    "text" => $row["text"],
+    "text" => $text,
     "status" => $row["status"]
   );
 }
