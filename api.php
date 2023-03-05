@@ -2,11 +2,7 @@
 
 declare(strict_types=1);
 
-$link = mysqli_connect("localhost", "testbug", "1234", "notifty");
-
-if (!$link) {
-    die("-1" . mysqli_connect_error());
-}
+require_once 'db.php';
 
 $name = htmlspecialchars($_POST['name']);
 $pkg = htmlspecialchars($_POST['pkg']);
@@ -18,8 +14,9 @@ if ($secrex !== "#dekthaihedumb") {
     die("0 Invalid secret key.");
 }
 
-$stmt = mysqli_prepare($link, "INSERT INTO testnotify (name,pkg,title,text) VALUES (?,?,?,?)");
-mysqli_stmt_bind_param($stmt, "sssss", $name, $pkg, $title, $text);
+$stmt = mysqli_prepare($link, "INSERT INTO testnotify (name, pkg, title, text) VALUES (?, ?, ?, ?)");
+
+mysqli_stmt_bind_param($stmt, "ssss", $name, $pkg, $title, $text);
 
 if (mysqli_stmt_execute($stmt)) {
     echo "1";
@@ -27,4 +24,5 @@ if (mysqli_stmt_execute($stmt)) {
     echo "0" . mysqli_error($link);
 }
 
+mysqli_stmt_close($stmt);
 mysqli_close($link);
