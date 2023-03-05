@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 require_once "db.php";
 
 class Notify {
@@ -9,9 +10,11 @@ class Notify {
   }
 
   public function searchAndUpdate($number) {
-    // Execute query
-    $sql = "SELECT * FROM notify";
-    $result = mysqli_query($this->conn, $sql);
+    // Prepare statement to prevent SQL injection
+    $stmt = mysqli_prepare($this->conn, "SELECT * FROM notify WHERE text LIKE CONCAT('%', ?, '%')");
+    mysqli_stmt_bind_param($stmt, "s", $number);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
 
     // Check for errors
     if (!$result) {
@@ -24,8 +27,9 @@ class Notify {
       if ($text == $number) {
         // Update status to "read"
         $id = $row["id"];
-        $sql = "UPDATE notify SET status='read' WHERE id=$id";
-        if (mysqli_query($this->conn, $sql)) {
+        $stmt = mysqli_prepare($this->conn, "UPDATE notify SET status='read' WHERE id=?");
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        if (mysqli_stmt_execute($stmt)) {
           echo "Status updated successfully";
         } else {
           echo "Error updating status: " . mysqli_error($this->conn);
@@ -36,19 +40,24 @@ class Notify {
 
     // Free result set
     mysqli_free_result($result);
+    mysqli_stmt_close($stmt);
   }
 }
 
 // Check if form submitted
-if (isset($_POST["number"])) {
-  $number = $_POST["number"];
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["number"])) {
+  $number = htmlspecialchars($_POST["number"]);
 
   // Connect to database
   $db = new Database();
+  $conn = $db->conn;
 
   // Search and update
   $notify = new Notify($db);
   $notify->searchAndUpdate($number);
+
+  // Close connection
+  mysqli_close($conn);
 }
 ?>
 
